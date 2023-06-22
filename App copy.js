@@ -10,7 +10,6 @@ import { NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD } from "./COOnfig";
 import NodeStylesPanel from "./NodeStylesPanel";
 
 
-
 const generateRandomColor = () => {
   const letters = '0123456789ABCDEF';
   let color = '#';
@@ -32,17 +31,14 @@ function App() {
   const [showCypher, setShowCypher] = useState(false);
   const [editEdgeData, setEditEdgeData] = useState(null);
   const [editEdgeModalOpen, setEditEdgeModalOpen] = useState(false);
-  const [queryType, setQueryType] = useState(1);
+  
  
 
   useEffect(() => {
     const driver = neo4j.driver(NEO4J_URI, neo4j.auth.basic(NEO4J_USER, NEO4J_PASSWORD));
     const session = driver.session();
 
-   // const [queryType, setQueryType] = useState(1);
-
-    
-  /*  async function fetchData() {
+    async function fetchData() {
       try {
         const result = await session.run("MATCH (n)-[r]->(m) RETURN n, r, m");
         //const result = await session.run("MATCH (n) RETURN n");
@@ -107,114 +103,9 @@ function App() {
         driver.close();
       }
     }
-*/
 
-
-    async function fetchDataQuery1() {
-      const driver = neo4j.driver(NEO4J_URI, neo4j.auth.basic(NEO4J_USER, NEO4J_PASSWORD));
-      const session = driver.session();
-    
-      try {
-        const result = await session.run("MATCH (n)-[r]->(m) RETURN n, r, m");
-        const nodes = new DataSet([]);
-        const edges = new DataSet([]);
-    
-        result.records.forEach((record) => {
-          const nodeId = record.get("n").identity.toNumber();
-          const nodeLabel = record.get("n").labels[0];
-          const mNodeId = record.get("m").identity.toNumber();
-          const mNodeLabel = record.get("m").labels[0];
-    
-          if (!labelColors[nodeLabel]) {
-            setLabelColors(prevColors => ({ ...prevColors, [nodeLabel]: { color: generateRandomColor(), shape: 'circle' } }));
-          }
-    
-          if (!labelColors[mNodeLabel]) {
-            setLabelColors(prevColors => ({ ...prevColors, [mNodeLabel]: { color: generateRandomColor(), shape: 'circle' } }));
-          }
-    
-          if (!nodes.get(nodeId)) {
-            nodes.add({
-              id: nodeId,
-              label: nodeLabel,
-              color: labelColors[nodeLabel]?.color || '#97c2fc',
-              shape: labelColors[nodeLabel]?.shape || 'circle',
-              properties: record.get("n").properties,
-            });
-          }
-    
-          if (!nodes.get(mNodeId)) {
-            nodes.add({
-              id: mNodeId,
-              label: mNodeLabel,
-              color: labelColors[mNodeLabel]?.color || '#97c2fc',
-              shape: labelColors[mNodeLabel]?.shape || 'circle',
-              properties: record.get("m").properties,
-            });
-          }
-    
-          edges.add({
-            id: record.get("r").identity.toNumber(),
-            from: nodeId,
-            to: mNodeId,
-            label: record.get("r").type,
-          });
-        });
-    
-        setGraphData({ nodes, edges });
-    
-      } catch (error) {
-        console.error("Error fetching graph data:", error);
-      } finally {
-        session.close();
-        driver.close();
-      }
-    }
-    
-    async function fetchDataQuery2() {
-      const driver = neo4j.driver(NEO4J_URI, neo4j.auth.basic(NEO4J_USER, NEO4J_PASSWORD));
-      const session = driver.session();
-    
-      try {
-        const result = await session.run("MATCH (n) RETURN n");
-        const nodes = new DataSet([]);
-    
-        result.records.forEach((record) => {
-          const nodeId = record.get("n").identity.toNumber();
-          const nodeLabel = record.get("n").labels[0];
-    
-          if (!labelColors[nodeLabel]) {
-            setLabelColors(prevColors => ({ ...prevColors, [nodeLabel]: { color: generateRandomColor(), shape: 'circle' } }));
-          }
-    
-          if (!nodes.get(nodeId)) {
-            nodes.add({
-              id: nodeId,
-              label: nodeLabel,
-              color: labelColors[nodeLabel]?.color || '#97c2fc',
-              shape: labelColors[nodeLabel]?.shape || 'circle',
-              properties: record.get("n").properties,
-            });
-          }
-        });
-    
-        setGraphData({ nodes, edges: new DataSet([]) }); // Set edges as an empty DataSet
-    
-      } catch (error) {
-        console.error("Error fetching graph data:", error);
-      } finally {
-        session.close();
-        driver.close();
-      }
-    }
-    
-
-    if (queryType === 1) {
-      fetchDataQuery1();
-    } else if (queryType === 2) {
-      fetchDataQuery2();
-    }
-  }, [labelColors,queryType]);
+    fetchData();
+  }, [labelColors]);
 
   useEffect(() => {
     if (network) {
@@ -244,12 +135,9 @@ function App() {
         setSelectedNode(null);
       });
     }
-
   }, [network, graphData, nodeCount]);
 
   const handleImportGraph = () => {
-    const userChoice = window.prompt("Please select the query type (Enter 1 or 2):");
-    setQueryType(parseInt(userChoice, 10));
   const container = document.getElementById("network");
    const options = {
   configure: {
@@ -285,7 +173,6 @@ function App() {
     },
   },
 };
-
 
   const newNetwork = new Network(container, graphData, options);
   setNetwork(newNetwork);
@@ -431,9 +318,6 @@ const handleEditEdgeConfirm = (updatedEdgeData) => {
       <button onClick={handleImportGraph}>Import Graph</button>
       <button onClick={handleSaveGraph}>Save Graph</button>
       <button onClick={handleShowCypher}>Show Cypher</button>
-      
-
-
       
       <button onClick={writeGraphToDatabase}>Write to Database</button>
       {showCypher && <CypherPanel cypher={cypherQuery} onCypherChange={handleCypherChange} />}
