@@ -16,22 +16,18 @@ function PropertiesPanel({ node, onSave }) {
     onSave({ ...node, properties });
   };
 
-  if (!node) return <div>Please select a node</div>;
+  //if (!node) return <div>Please select a node</div>;
 
   return (
     <div>
-      <h3>Node Properties</h3>
+      <h4>Node Properties</h4>
       {Object.entries(properties).map(([key, value]) => (
         <div key={key}>
-          <label>{key}:</label>
-          <input
-            type="text"
-            value={value}
-            onChange={(e) => handleChange(key, e.target.value)}
-          />
+          <label>{key} : {value} </label>
+      
         </div>
       ))}
-      <button onClick={handleSave}>Save</button>
+
     </div>
   );
 }
