@@ -1,22 +1,100 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+
 .App {
-  font-family: Arial, sans-serif;
-  display: flex;
-  justify-content: space-around;
-  align-items: flex-start;
-  padding: 20px;
+  font-family:'Roboto', sans-serif;
+  display: grid;
+  grid-template-columns: 100px 1000px 150px;
+  grid-template-rows: 5px auto 20px;
+  grid-template-areas: 
+  "topbar topbar topbar"
+  "leftbar main rightbar";
+  align-items: start;
+  padding: 0px;
   background-color: #f0f0f0;
   min-height: 100vh;
+  }
+
+.node-style {
+    display: flex;
+    flex-direction: row; /* Ensure that node style components align in a row */
+    justify-content: space-between; /* Distribute space evenly between node style components */
+    align-items: left; /* Align items vertically in the center */
+    /*width: 10%; /* Take the full width of the container */
+  }
+
+.top-bar {
+  grid-area: topbar;
+  display: flex;
+  justify-content: space-evenly; /* Use this instead of space-around to evenly distribute buttons */
+  align-items: center;
+  border: 1px solid #cf1717; 
+  background-color: #1073d5;
 }
 
+.main-content {
+  grid-area: main;
+  height: calc(100vh - 100px); /* Adjust according to your needs, 
+                                  here it's 100% of viewport height minus 100px for top and bottom bars */
+  overflow: hidden;
+  width: 97%;
+  padding: 1rem;  /*Add padding to separate canvas from borders */ 
+}
+
+.rightbar {
+  grid-area: rightbar;
+  padding: 1rem;
+  box-sizing: border-box;
+  border-left: 1px solid #ccc;
+  overflow-y: auto;
+
+  flex-direction: column; /* Align modals vertically */
+  justify-content: space-evenly; /* Distribute modals evenly */
+  width: 150px;
+  height: 100%;
+}
+
+
+.leftbar {
+  grid-area: leftbar;
+  /*padding: 1rem; */
+  justify-content: left;
+  box-sizing: border-box;
+  /* border-right: 1px solid #ccc; */
+  border-right: none; 
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Align items to the start of the flex container */
+  height: 80%;
+  overflow-x: hidden;
+  width: 100px;
+  
+}
+
+
+/*
+.sidebar {
+  grid-area: sidebar;
+  height: 600px;
+  padding: 1rem;
+  box-sizing: border-box;
+  border-right: 1px solid #ccc;
+  overflow-y: auto;
+}
+*/
+
 button {
-  display: block;
-  margin-top: 10px;
-  background-color: #007bff;
+  display: inline-block;
+  width: 80px;  /* This sets a uniform width for all buttons */
+  height: 50px;  /* This sets a uniform height for all buttons */
+  margin: 10px;
+  background-color: #8800ff;
   color: #fff;
   border: none;
-  padding: 5px 10px;
+  padding: 0px 0px;
   cursor: pointer;
   transition: background-color 0.3s;
+  text-align: center;  /* Ensures the text on the button is centered */
 }
 
 button:hover {
@@ -38,12 +116,86 @@ button:active {
   overflow-y: auto;
 }
 
+
+
 /* Add this to an existing CSS file or create a new one */
 /* Add this to an existing CSS file or create a new one */
 .cypher-panel {
   width: 100%;
-  padding: 1rem;
+  /*padding: 1rem;*/
   box-sizing: border-box;
-  border-top: 1px solid #ccc;
+  /* border-top: 1px solid #ccc */;
   overflow-y: auto;
+}
+
+
+.context-menu {
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
+.menu-item {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  background: #f8f9fa;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 80px;
+  color: #495057;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.menu-item:hover {
+  background: #e9ecef;
+}
+
+.menu-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #007bff;
+  color: #ca1313;
+  border: none;
+  cursor: pointer;
+  outline: none;
+}
+
+
+.vis-manipulation .vis-button {
+  color: black; /* Make button text color black */
+  width: 100px;
+  display: flex;
+  text-align: left;
+  font-size: 104px 
+}
+
+
+.vis-manipulation {
+  color: black; /* Make button text color black */
+  
+}
+
+/* Existing styles... */
+
+/* Add the following at the end */
+
+#network .vis-network {
+  position: absolute;
+  top: 20;
+  left: 0;
+  right: 0;  /* Adjust this value to create enough padding with the bottom bar */
+  width: 100%;
+  height: 100%;
+}
+
+.vis-manipulation {
+  height: 200px;
+  display: flex;
+  text-align: left; 
 }
