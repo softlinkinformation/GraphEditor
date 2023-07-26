@@ -1,4 +1,6 @@
 // src/App.js
+
+//ALL THE IMPORTS
 import './App.css'
 import React, { useState, useEffect, useRef } from "react";
 import { DataSet, Network } from "vis-network/standalone";
@@ -12,7 +14,7 @@ import NodeStylesPanel from "./NodeStylesPanel";
 
 
 
-
+//Random color generator function to generate colors for populated nodes from the graph database
 const generateRandomColor = () => {
   const letters = '0123456789ABCDEF';
   let color = '#';
@@ -23,9 +25,11 @@ const generateRandomColor = () => {
 }
 
 function App() {
+
+//Here we set all the states that will be used in the editor. 
+//Each state contains a variable followed by a function to update  the state.
+
   const [graphData, setGraphData] = useState({ nodes: new DataSet([]), edges: new DataSet([]) });
-  //const [jsonGraphData, setjsonGraphData] = useState({ nodes: new DataSet([]), edges: new DataSet([]) });
-  
   const [network, setNetwork] = useState(null);
   const [selectedNode, setSelectedNode] = useState(null);
   const [nodeCount, setNodeCount] = useState(0); 
@@ -46,22 +50,23 @@ function App() {
   const [isNodeStylesModalOpen, setIsNodeStylesModalOpen] = useState(false);
 
 
-  //const [canvasState, setCanvasState] = useState({}); // New State for Canvas
-  //const saveableCanvas = useRef();
 
-
+//Function to set the contextMenu to true. 
   const showContextMenu = (position) => {
     setContextMenuPosition(position);
     setContextMenuVisible(true);
   };
   
+
+  //Ignore this function, it is not ued anymore. 
   const hideContextMenu = () => {
     setContextMenuVisible(false);
   };
   
 
 
-  
+  // This hook gets the latest node ID in neo4j, to maintain uniqueness of IDs of new nodes created in the editor. 
+  //It listens to the queryType state, hence once we select the query to import the data into the editor, the queryType state will change
   useEffect(() => {
     const fetchMaxNodeId = async () => {
       const driver = neo4j.driver(NEO4J_URI, neo4j.auth.basic(NEO4J_USER, NEO4J_PASSWORD),{database: DATABASE});
@@ -91,12 +96,12 @@ function App() {
 
   
   
-
+//This hook sets the node ID, and listens to the NodeID state, it will change when a node is created in the editor. 
   useEffect(() => {
     localStorage.setItem("nodeId", nodeId);
   }, [nodeId]);
 
-
+//This hook retrieves the nodeId from the local storage. (browser)
   useEffect(() => {
     const savedNodeId = localStorage.getItem("nodeId");
     if (savedNodeId) {
@@ -106,14 +111,16 @@ function App() {
 
 
 
-
+//This hook asks the user to select the query to be used to import the data from neo4j. 
   useEffect(() => {
     const fetchData = async () => {
       if(queryType !== null){
         if (queryType === 1) {
+          //fetchDataQuery1 is the function that imports the data of all nodes but no relationships
           await fetchDataQuery1();
           console.log("launched query1");
         } else if (queryType === 2) {
+          //fetchDataQuery2 is the function that imports the data of all nodes that have relationships
           await fetchDataQuery2();
           console.log("launched query2");
         } 
@@ -126,11 +133,12 @@ function App() {
   }, [labelColors, queryType]);
 
   
-
+//this hook has all the event manipulation, for example what happens on click, doubleclick etc.  
   useEffect(() => {
     console.log("inside click useeffect")
     if (network) {
 
+      //Ignore this Function, its not being used anymore. 
       const canvasToDOM = (position) => {
         const DOMPos = network.canvasToDOM(position);
         return { x: DOMPos.x, y: DOMPos.y };
@@ -148,16 +156,19 @@ function App() {
         }
       });
    */
-
+      //This is the click event handle. 
       network.on('click', function(properties) {
         const ids = properties.nodes;
         const clickedNodes = graphData.nodes.get(ids);
     
         // If a node was clicked
         if(clickedNodes.length > 0) {
-          // Update the clicked node to have a "halo"
+          // Update the clicked node to have a "halo" (the border width becomes thicker)
           graphData.nodes.update([{id: clickedNodes[0].id, borderWidth: 5}]);
           showContextMenu(properties.pointer.DOM);
+
+          //Below are old code snippets that might be needed. 
+
           //var nodePosition = network.getPositions([clickedNodes[0].id])[clickedNodes[0].id];
           //var DOMPosition = canvasToDOM(nodePosition);
 
@@ -215,6 +226,8 @@ function App() {
     }
 
   }, [network, graphData, nodeCount]);
+
+//OLD CODE
 /*
   const ContextMenu = ({x, y}) => {
     if (!contextMenuVisible) return null;
@@ -292,12 +305,14 @@ const ContextMenu = ({ x, y }) => {
 };
 */
 
-
+//The menu that appears when a node is selected. 
   const ContextMenu = ({x, y, onOptionSelect}) => {
     if (!contextMenuVisible) return null;
     //<button onClick={launchPresetCypherQuery}>Launch Preset Cypher Query</button>
+    //MORE BUTTONS CAN BE ADDED IN THE RETURN STATEMENT, 
     return (
       <div style={{ position: "fixed", top: contextMenuPosition.y, left: contextMenuPosition.x }}>
+        
         <button onClick={expandNodeConnections}>Expand Connections</button>
         
         <button onClick={collapseIncommingConnections}>Collapse Incoming Connections</button>
@@ -307,35 +322,28 @@ const ContextMenu = ({ x, y }) => {
   };
 
   
-
+//The function to import data from neo4j
   const fetchDataQuery1 = async () => {
     // Existing code for fetchDataQuery1
+    //open neo4j driver session
     const driver = neo4j.driver(NEO4J_URI, neo4j.auth.basic(NEO4J_USER, NEO4J_PASSWORD),{database: DATABASE});
       const session = driver.session();
-    
+    //run cypher query
       try {
         const result = await session.run("MATCH (n)-[r]->(m) RETURN n, r, m LIMIT 10");
         const nodes = new DataSet([]);
         const edges = new DataSet([]);
-    
+    //store the node information in variables. 
         result.records.forEach((record) => {
           const nodeNeo4jId = record.get("n").identity.toNumber(); // Neo4j's internal ID
           const nodeLabel = record.get("n").labels[0];
           const nodeId = record.get("n").properties.id;
 
-          //const nodeId = record.get("n").identity.toNumber();
-          //const nodeLabel = record.get("n").labels[0];
-
           const mNodeNeo4jId = record.get("m").identity.toNumber(); // Neo4j's internal ID
           const mNodeLabel = record.get("m").labels[0];
           const mNodeId = record.get("m").properties.id;
-
-          //const mNodeId = record.get("m").identity.toNumber();
-          //const mNodeLabel = record.get("m").labels[0];
-
           
-          
-    
+    //Sets label colors from the random color generator function declared at the top
           if (!labelColors[nodeLabel]) {
             setLabelColors(prevColors => ({ ...prevColors, [nodeLabel]: { color: generateRandomColor(), shape: 'circle' } }));
           }
@@ -343,7 +351,7 @@ const ContextMenu = ({ x, y }) => {
           if (!labelColors[mNodeLabel]) {
             setLabelColors(prevColors => ({ ...prevColors, [mNodeLabel]: { color: generateRandomColor(), shape: 'circle' } }));
           }
-    
+    //Add the nodes to the canvas. 
           if (!nodes.get(nodeId)) {
             nodes.add({
               id: nodeId,
@@ -379,6 +387,7 @@ const ContextMenu = ({ x, y }) => {
 
        // console.log("added edge with source ID",nodeId, "and target ID", );
     
+       //The graphdata state is set here. 
         setGraphData({ nodes, edges });
     
       } catch (error) {
@@ -389,7 +398,7 @@ const ContextMenu = ({ x, y }) => {
       }
   };
 
-
+//Another function to import data from neo4j, follows the same principle of fetchDataQuery1. 
   const fetchDataQuery2 = async () => {
   const driver = neo4j.driver(NEO4J_URI, neo4j.auth.basic(NEO4J_USER, NEO4J_PASSWORD),{database: DATABASE});
   const session = driver.session();
@@ -434,7 +443,7 @@ const ContextMenu = ({ x, y }) => {
 }
 
 
-
+//This hook contains all the manipulations of the vis-network library, where the user can add, delete and edit ndoes.
 useEffect(() => {
   if (queryType === null ) {console.log("exiting the function "); return; } // exit if no query selected
   console.log("querytype", queryType);
@@ -442,7 +451,7 @@ useEffect(() => {
   
     // Your options...
     const options = {
-      
+      //configuration options of viz-network
       configure: {
       enabled: false,
       //filter: ["physics"],
@@ -456,6 +465,7 @@ useEffect(() => {
       manipulation: {
       enabled: true,
       initiallyActive: true,
+      //Handles creation of new nodes on the canvas. 
       addNode: (nodeData, callback) => {
 
         setNodeId((prevNodeId) => {
@@ -481,6 +491,7 @@ useEffect(() => {
         //nodeData.label = timestampId;
         //callback(nodeData);
       
+      //Handles edit nodes. 
       editNode: (nodeData, callback) => {
         handleEditNode(nodeData, callback);
         callback(null);
@@ -499,20 +510,22 @@ useEffect(() => {
       console.log("added nodes")
     
   
-
+//Updates the network after adding the nodes,edes etc. 
   const newNetwork = new Network(container, graphData, options);
   setNetwork(newNetwork);
   console.log("networkchanged")
   
-}, [queryType, graphData, labelColors]);  // Listen to changes in queryType
+}, [queryType, graphData, labelColors]);  // Listen to changes in queryType, and graphData. 
 
 
+
+//Functions of different buttons in the context menu. this functions is used inside the expand and colapse node functions. 
 const fetchNodeConnectionsFromDatabase = async (nodeId) => {
   console.log("node id is", nodeId)
   const driver = neo4j.driver(NEO4J_URI, neo4j.auth.basic(NEO4J_USER, NEO4J_PASSWORD),{database: DATABASE});
   const session = driver.session();
   let result;
-
+//Fetches the nodes connected to the selected node. 
   try {
       result = await session.run("MATCH (n)-[r]->(m) WHERE n.id = $nodeId RETURN r, m", { nodeId: nodeId });
   } catch (error) {
@@ -526,7 +539,7 @@ const fetchNodeConnectionsFromDatabase = async (nodeId) => {
 };
 
 
-
+//Function to expand the node connections. 
 const expandNodeConnections = async () => {
   if (!selectedNode) return;  // Exit if no node is selected
 
@@ -569,6 +582,7 @@ const expandNodeConnections = async () => {
   network.redraw();
 };
 
+//Function to Collapse the node (Incomming connections)
 const collapseIncommingConnections = () => {
   if (!selectedNode) return;  // Exit if no node is selected
 
@@ -582,6 +596,7 @@ const collapseIncommingConnections = () => {
   network.redraw();
 };
 
+//Function to Collapse the node (outgoing connections)
 const collapseOutgoingConnections = () => {
   if (!selectedNode) return;  // Exit if no node is selected
 
@@ -606,16 +621,19 @@ const launchPresetCypherQuery = async () => {
 
 */
 
+//Asks the user to select the query they want to use to import the data from neo4j into the canvas. 
 const handleImportGraph = () => {
     const userChoice = window.prompt("Please select the query type (Enter 1 or 2):");
     setQueryType(parseInt(userChoice, 10));
 
 };
 
+//Launches the Edit Edge modal when the edit edge button is clicked
 const handleEditEdge = (edgeData, callback) => {
   setEditEdgeData(edgeData);
   setEditEdgeModalOpen(true);
 };
+
 
 const handleEditEdgeConfirm = (updatedEdgeData) => {
   graphData.edges.update(updatedEdgeData);
@@ -623,6 +641,7 @@ const handleEditEdgeConfirm = (updatedEdgeData) => {
   setEditEdgeData(null);
 };
 
+//Launches the Edit Node modal when the edit node button is clicked
   const handleEditNode = (nodeData, callback) => {
     setEditNodeData(nodeData);
     setEditNodeModalOpen(true);
@@ -635,9 +654,11 @@ const handleEditEdgeConfirm = (updatedEdgeData) => {
   };
   
 
+//the next two functions deal with showing the cypher query of the network created on canvas. 
   const handleCypherChange = (newCypherQuery) => {
     setCypherQuery(newCypherQuery);
   };
+
 
   const handleShowCypher = () => {
     const generatedQuery = generateCypherQuery();
@@ -646,13 +667,14 @@ const handleEditEdgeConfirm = (updatedEdgeData) => {
   };
 
 
+//Function to handle color change of nodes.
   const handleLabelColorChange = (label, color) => {
     setLabelColors(prevColors => ({
       ...prevColors,
       [label]: { ...prevColors[label], color }
     }));
   };
-
+  //Function to handle shape change of nodes.
   const handleLabelShapeChange = (label, shape) => {
     setLabelColors(prevColors => ({
       ...prevColors,
@@ -660,6 +682,8 @@ const handleEditEdgeConfirm = (updatedEdgeData) => {
     }));
   };
 
+
+//Function to handle the JSON export of the canvas details. 
   const handleSaveGraph = () => {
     const dataToExport = {
       nodes: graphData.nodes.get(),
@@ -676,6 +700,8 @@ const handleEditEdgeConfirm = (updatedEdgeData) => {
 
     URL.revokeObjectURL(url);
   };
+
+
 
 const generateCypherQuery = () => {
   const nodes = graphData.nodes.get();
@@ -710,7 +736,7 @@ const generateCypherQuery = () => {
 };
 
   
-
+//Function to Write the created nodes into Neo4j. 
   const writeGraphToDatabase = async () => {
     const cypherQuery = generateCypherQuery();
     const driver = neo4j.driver(NEO4J_URI, neo4j.auth.basic(NEO4J_USER, NEO4J_PASSWORD),{database: DATABASE});
@@ -727,6 +753,8 @@ const generateCypherQuery = () => {
     }
   };
 
+
+//Function to handle what happens when save vizualization button is clicked. 
   function saveGraphData() {
     const nodes = graphData.nodes.get();
     const edges = graphData.edges.get();
@@ -775,7 +803,7 @@ const generateCypherQuery = () => {
 
   //const [showCypher, setShowCypher] = useState(false);
 
-
+//RETURN ELEMENTS OF THE HTML.
   return (
     <div className="App">
       <div className="leftbar ">
