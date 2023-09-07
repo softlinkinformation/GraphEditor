@@ -9,8 +9,14 @@ import PropertiesPanel from "./PropertiesPanel";
 import CypherPanel from "./CypherPanel";
 import EditNodeModal from "./EditNodeModal";
 import EditEdgeModal from "./EditEdgeModal";
+import { NE<<<<<<< HEAD
 import { NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD,DATABASE } from "./COOnfig";
 import NodeStylesPanel from "./NodeStylesPanel";
+=======
+import { NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD,DATABASE } from "./Config";
+import NodeStylesPanel from "./NodeStylesPanel";
+import ImportGraphModal from './ImportGraphModal';
+>>>>>>> b776cbb (Saving local changes before checking out main branch)
 
 
 
@@ -48,9 +54,18 @@ function App() {
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const networkContainerRef = useRef(null);
   const [isNodeStylesModalOpen, setIsNodeStylesModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [label, setLabel] = useState("");
 
 
-
+  function usePrevious(value) {
+    const ref = useRef();
+    useEffect(() => {
+      ref.current = value;
+    });
+    return ref.current;
+  }
+  
 //Function to set the contextMenu to true. 
   const showContextMenu = (position) => {
     setContextMenuPosition(position);
@@ -63,6 +78,15 @@ function App() {
     setContextMenuVisible(false);
   };
   
+
+  // define a function to open your modal and fetch the labels from your database
+
+
+const onLabelButtonClick = (label) => {
+  console.log(`Importing graph for label: ${label}`);
+  // insert your graph import logic here
+};
+
 
 
   // This hook gets the latest node ID in neo4j, to maintain uniqueness of IDs of new nodes created in the editor. 
@@ -79,6 +103,7 @@ function App() {
           // If maxId is not null, increment it and set to nodeId state
           if (maxId !== null) {
             setNodeId(maxId.toNumber() + 1);
+            console.log("the max node id is",maxId.toNumber())
           }
         }
       } catch (error) {
@@ -91,7 +116,8 @@ function App() {
     };
   
     fetchMaxNodeId();
-  }, [queryType]);
+
+  }, [queryType,network]);
 
 
   
@@ -99,15 +125,17 @@ function App() {
 //This hook sets the node ID, and listens to the NodeID state, it will change when a node is created in the editor. 
   useEffect(() => {
     localStorage.setItem("nodeId", nodeId);
-  }, [nodeId]);
-
+    console.log("the node id is being set")
 //This hook retrieves the nodeId from the local storage. (browser)
-  useEffect(() => {
     const savedNodeId = localStorage.getItem("nodeId");
     if (savedNodeId) {
       setNodeId(Number(savedNodeId));
     }
-  }, []);
+  }, [queryType]);
+
+  useEffect(() => {
+    console.log("Selected node has changed: ", selectedNode);
+ }, [selectedNode]);
 
 
 
@@ -118,24 +146,45 @@ function App() {
         if (queryType === 1) {
           //fetchDataQuery1 is the function that imports the data of all nodes but no relationships
           await fetchDataQuery1();
+          //await fetchDataBasedOnLabel(label);
           console.log("launched query1");
         } else if (queryType === 2) {
           //fetchDataQuery2 is the function that imports the data of all nodes that have relationships
           await fetchDataQuery2();
           console.log("launched query2");
+          //fetchDataBasedOnLabel(label);
+        } 
+
+        else if (queryType === 3) {
+          //fetchDataQuery2 is the function that imports the data of all nodes that have relationships
+          //await fetchDataQuery2();
+          console.log("launched query 3");
+          await fetchDataBasedOnLabel(label);
         } 
       } else {
         console.log("please click import graph to begin")
+        //fetchDataBasedOnLabel(label);
       }
     };
     
     fetchData();
-  }, [labelColors, queryType]);
+  }, [labelColors, queryType, label]);
 
   
 //this hook has all the event manipulation, for example what happens on click, doubleclick etc.  
+
+const prevSelectedNode = usePrevious(selectedNode);
+
   useEffect(() => {
     console.log("inside click useeffect")
+    let singleClickTimeout = null;
+
+    const handleKeyDown = (event) => {
+      if (event.ctrlKey && event.key === 'z') {
+        collapseAllConnections();
+      }
+    };
+
     if (network) {
 
       //Ignore this Function, its not being used anymore. 
@@ -143,6 +192,14 @@ function App() {
         const DOMPos = network.canvasToDOM(position);
         return { x: DOMPos.x, y: DOMPos.y };
       };
+
+      
+
+      // Listen to keydown event
+    
+  
+  // Add keydown event listener
+  window.addEventListener('keydown', handleKeyDown);
 
       /*
       network.on("doubleClick", (params) => {
@@ -158,14 +215,30 @@ function App() {
    */
       //This is the click event handle. 
       network.on('click', function(properties) {
+        clearTimeout(singleClickTimeout);
         const ids = properties.nodes;
         const clickedNodes = graphData.nodes.get(ids);
-    
+
+        singleClickTimeout = setTimeout(() => {
+          const ids = properties.nodes;
+          const clickedNodes = graphData.nodes.get(ids);
+      
+          // If a node was clicked
+          if (clickedNodes.length > 0) {
+              graphData.nodes.update([{id: clickedNodes[0].id, borderWidth: 5}]);
+          } else {
+              setContextMenuVisible(false);
+              const updatedNodes = graphData.nodes.get().map(node => ({ ...node, borderWidth: 1}));
+              graphData.nodes.update(updatedNodes);
+          }
+      }, 1); // 250ms delay; adjust as needed
+    });
+    /*
         // If a node was clicked
         if(clickedNodes.length > 0) {
           // Update the clicked node to have a "halo" (the border width becomes thicker)
           graphData.nodes.update([{id: clickedNodes[0].id, borderWidth: 5}]);
-          showContextMenu(properties.pointer.DOM);
+          //showContextMenu(properties.pointer.DOM);
 
           //Below are old code snippets that might be needed. 
 
@@ -187,6 +260,7 @@ function App() {
           setContextMenuPosition(absoluteClickPosition);
           setContextMenuVisible(true);
           */
+         /*
         } else {
           // Hide the context menu if it's visible and reset node's "halo"
           setContextMenuVisible(false);
@@ -206,7 +280,26 @@ function App() {
           const updatedNodes = graphData.nodes.map(node => ({ ...node, borderWidth: 1}));
           graphData.nodes.update(updatedNodes);
         }
+        // add star slash also
+      });
         */
+      network.on('doubleClick', function(properties) {
+        clearTimeout(singleClickTimeout);
+        
+        const ids = properties.nodes;
+        const clickedNodes = graphData.nodes.get(ids);
+        //graphData.nodes.update([{id: clickedNodes[0].id, borderWidth: 5}]);
+        console.log("the clicked node is", clickedNodes )
+        console.log("the node to be selected", clickedNodes[0] )
+        // If a node was double-clicked
+        if(clickedNodes.length >= 0) {
+          //  graphData.nodes.update([{id: clickedNodes[0].id, borderWidth: 5}]);
+          setSelectedNode(clickedNodes[0]);
+          console.log("the selected node is", selectedNode); 
+          
+          console.log("inside doubleclick"); 
+        }
+        expandNodeConnections();
       });
   
 
@@ -225,7 +318,12 @@ function App() {
       });
     }
 
-  }, [network, graphData, nodeCount]);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    }
+  
+
+  }, [network, graphData, nodeCount,queryType, labelColors,selectedNode]);
 
 //OLD CODE
 /*
@@ -321,6 +419,48 @@ const ContextMenu = ({ x, y }) => {
     );
   };
 
+  const fetchDataBasedOnLabel = async (label) => {
+    console.log("inside fetchdatalabel");
+    // Open neo4j driver session
+    const driver = neo4j.driver(NEO4J_URI, neo4j.auth.basic(NEO4J_USER, NEO4J_PASSWORD),{database: DATABASE});
+    const session = driver.session();
+
+    try {
+        // Run cypher query that matches nodes with a specific label
+        const result = await session.run(`MATCH (n:${label}) RETURN n LIMIT 10`);
+        const nodes = new DataSet([]);
+
+        result.records.forEach((record) => {
+            const nodeNeo4jId = record.get("n").identity.toNumber(); // Neo4j's internal ID
+            const nodeLabel = record.get("n").labels[0];
+            const nodeId = record.get("n").properties.id; // Get "id" property of the node
+
+            if (!labelColors[nodeLabel]) {
+                setLabelColors(prevColors => ({ ...prevColors, [nodeLabel]: { color: generateRandomColor(), shape: 'circle' } }));
+            }
+
+            if (!nodes.get(nodeId)) {
+                nodes.add({
+                    id: nodeId,
+                    neo4jId: nodeNeo4jId,
+                    label: nodeLabel,
+                    color: labelColors[nodeLabel]?.color || '#97c2fc',
+                    shape: labelColors[nodeLabel]?.shape || 'circle',
+                    properties: record.get("n").properties,
+                });
+            }
+        });
+
+        setGraphData({ nodes, edges: new DataSet([]) }); // Set edges as an empty DataSet
+    } catch (error) {
+        console.error("Error fetching graph data:", error);
+    } finally {
+        session.close();
+        driver.close();
+    }
+}
+
+
   
 //The function to import data from neo4j
   const fetchDataQuery1 = async () => {
@@ -353,6 +493,7 @@ const ContextMenu = ({ x, y }) => {
           }
     //Add the nodes to the canvas. 
           if (!nodes.get(nodeId)) {
+            console.log("adding nodes");
             nodes.add({
               id: nodeId,
               neo4jId: nodeNeo4jId,
@@ -365,6 +506,7 @@ const ContextMenu = ({ x, y }) => {
           //console.log("added n node with ID:",nodeId);
     
           if (!nodes.get(mNodeId)) {
+            console.log("adding nodes m");
             nodes.add({
               id: mNodeId,
               neo4jId: mNodeNeo4jId,
@@ -418,6 +560,7 @@ const ContextMenu = ({ x, y }) => {
       }
 
       if (!nodes.get(nodeId)) {
+        console.log("adding nodes");
         nodes.add({
           id: nodeId,
           neo4jId: nodeNeo4jId,
@@ -433,7 +576,6 @@ const ContextMenu = ({ x, y }) => {
 
 
     setGraphData({ nodes, edges: new DataSet([]) }); // Set edges as an empty DataSet
-    console.log("Something has been changed")
   } catch (error) {
     console.error("Error fetching graph data:", error);
   } finally {
@@ -453,10 +595,10 @@ useEffect(() => {
     const options = {
       //configuration options of viz-network
       configure: {
-      enabled: false,
-      //filter: ["physics"],
+      enabled: true,
+      filter: ["physics"],
       filter: ["nodes", "edges", "physics"],
-      //container: undefined,
+      container: undefined,
       showButton: true,
       },
       edges: {
@@ -521,6 +663,7 @@ useEffect(() => {
 
 //Functions of different buttons in the context menu. this functions is used inside the expand and colapse node functions. 
 const fetchNodeConnectionsFromDatabase = async (nodeId) => {
+  console.log("inside fetch node connections")
   console.log("node id is", nodeId)
   const driver = neo4j.driver(NEO4J_URI, neo4j.auth.basic(NEO4J_USER, NEO4J_PASSWORD),{database: DATABASE});
   const session = driver.session();
@@ -540,9 +683,82 @@ const fetchNodeConnectionsFromDatabase = async (nodeId) => {
 
 
 //Function to expand the node connections. 
+
+
+const expandNodeConnections = async () => {
+  console.log("inside expand")
+  if (!selectedNode) {
+    console.log("selected node is", selectedNode );
+    console.log("exiting expand") 
+    return;  // Exit if no node is selected
+  }
+  
+  try {
+    const result = await fetchNodeConnectionsFromDatabase(selectedNode.properties.id);
+
+    if (!result) {
+      console.error("Nothing to expand. The result from the database is undefined.");
+      return;
+    }
+    
+    result.records.forEach((record) => {
+      // Assuming record contains the id of the target node and the relationship data
+      const targetNode = record.get("m");
+      const targetNodeId = targetNode.properties.id;
+      const properties = targetNode.properties; 
+      const targetNodeLabel = targetNode.labels[0]; // Get "label" property of the node
+      const relationship = record.get("r");
+      const nodeLabel = record.get("m").labels[0]
+      // If no color is assigned to the label of the node, generate a random color
+      if (!labelColors[targetNodeLabel]) {
+        setLabelColors(prevColors => ({ 
+          ...prevColors, 
+          [targetNodeLabel]: { color: generateRandomColor(), shape: 'circle' }
+        }));
+      }
+
+      // Check if the node already exists
+      if (!graphData.nodes.get(targetNodeId)) {
+        graphData.nodes.add({
+          id: targetNodeId,
+          label: nodeLabel,
+          color: labelColors[targetNodeLabel]?.color || '#97c2fc',  // Set the node's color
+          shape: labelColors[targetNodeLabel]?.shape || 'circle',
+          properties : properties
+        });
+      }
+
+      const existingEdges = graphData.edges.get();
+      const existingEdge = existingEdges.find(edge => 
+        edge.from === selectedNode.id &&
+        edge.to === targetNodeId &&
+        edge.label === relationship.type
+      );
+
+      const existingReverseEdge = existingEdges.find(edge => 
+        edge.to === selectedNode.id &&
+        edge.from === targetNodeId &&
+        edge.label === relationship.type
+      );
+
+      if (!existingEdge && !existingReverseEdge) {
+        graphData.edges.add({ from: selectedNode.id, to: targetNodeId, label: relationship.type });
+      }
+    });
+
+    network.redraw();
+  } catch (error) {
+    console.error("Failed to expand node connections: ", error);
+  }
+};
+
+
+/*
 const expandNodeConnections = async () => {
   if (!selectedNode) return;  // Exit if no node is selected
 
+
+  try {
   const result = await fetchNodeConnectionsFromDatabase(selectedNode.properties.id);
   
   
@@ -580,21 +796,33 @@ const expandNodeConnections = async () => {
   });
 
   network.redraw();
+} catch (error) {
+  console.error("Error expanding node connections:", error);
+}
+
 };
+*/
 
 //Function to Collapse the node (Incomming connections)
-const collapseIncommingConnections = () => {
-  if (!selectedNode) return;  // Exit if no node is selected
+  const collapseIncommingConnections = () => {
+    if (!selectedNode) return;  // Exit if no node is selected
 
-  const connectedEdges = graphData.edges.get({
-    filter: function (edge) {
-      return edge.to === selectedNode.id;
-    }
-  });
+    const connectedEdges = graphData.edges.get({
+      filter: function (edge) {
+        return edge.to === selectedNode.id;
+      }
+    });
 
-  graphData.edges.remove(connectedEdges);
-  network.redraw();
-};
+    //const sourceNodes = connectedEdges.map(edge => edge.from);
+    const sourceNodes = connectedEdges.map(edge => edge.from)
+                                     .filter(nodeId => nodeId !== selectedNode.id);
+
+
+    graphData.edges.remove(connectedEdges);
+    graphData.nodes.remove(sourceNodes);
+
+    network.redraw();
+  };
 
 //Function to Collapse the node (outgoing connections)
 const collapseOutgoingConnections = () => {
@@ -606,9 +834,25 @@ const collapseOutgoingConnections = () => {
     }
   });
 
+  //const targetNodes = connectedEdges.map(edge => edge.to);
+  const targetNodes = connectedEdges.map(edge => edge.to)
+                                    .filter(nodeId => nodeId !== selectedNode.id);
+
   graphData.edges.remove(connectedEdges);
+  graphData.nodes.remove(targetNodes);
+
   network.redraw();
 };
+
+
+const collapseAllConnections = () => {
+  collapseOutgoingConnections();
+  collapseIncommingConnections();
+};
+
+
+
+
 
 /*
 const launchPresetCypherQuery = async () => {
@@ -639,6 +883,7 @@ const handleEditEdgeConfirm = (updatedEdgeData) => {
   graphData.edges.update(updatedEdgeData);
   setEditEdgeModalOpen(false);
   setEditEdgeData(null);
+  writeGraphToDatabase();
 };
 
 //Launches the Edit Node modal when the edit node button is clicked
@@ -647,8 +892,10 @@ const handleEditEdgeConfirm = (updatedEdgeData) => {
     setEditNodeModalOpen(true);
   };
 
-  const handleEditNodeConfirm = (updatedNodeData) => {
-    graphData.nodes.update(updatedNodeData);
+  const handleEditNodeConfirm = (newNodeData) => {
+    graphData.nodes.update(newNodeData);  
+    //graphData.nodes.update(updatedNodeData);
+    writeGraphToDatabase();
     setEditNodeModalOpen(false);
     setEditNodeData(null);
   };
@@ -804,77 +1051,47 @@ const generateCypherQuery = () => {
   //const [showCypher, setShowCypher] = useState(false);
 
 //RETURN ELEMENTS OF THE HTML.
+//<button onClick={handleSaveGraph}>Save Graph</button>
+//<button onClick={handleImportGraph}>Import Graph</button>
+//<button onClick={writeGraphToDatabase}>Save Graph</button>
   return (
     <div className="App">
       <div className="leftbar ">
-        <button onClick={handleImportGraph}>Import Graph</button>
-        <button onClick={handleSaveGraph}>Save Graph</button>
+      <button onClick={() => setIsImportModalOpen(true)} >Import Labels</button> 
         <button onClick={handleShowCypher}>Show Cypher</button>
-        <button onClick={writeGraphToDatabase}>Write to Database</button>
-        <button onClick={saveGraphData}>Save Visualization</button>
+        <button onClick={saveGraphData}>Export JSON</button>
         <button onClick={() => setIsNodeStylesModalOpen(true)}>Show Node Styles</button>
       </div>
+
+      <ImportGraphModal 
+  isOpen={isImportModalOpen} 
+  onRequestClose={() => setIsImportModalOpen(false)} 
+  onImport={(label) => {
+    // Set the query type to 3 and the label
+    setQueryType(3);
+    setLabel(label);
+    setIsImportModalOpen(false);
+  }}
+/>
+      
       
       <div className="top-bar">
-        <EditNodeModal
-          isOpen={editNodeModalOpen}
-          nodeData={editNodeData}
-          onConfirm={handleEditNodeConfirm}
-          onCancel={() => setEditNodeModalOpen(false)}
-        />
+      <EditNodeModal
+  isOpen={editNodeModalOpen}
+  nodeData={editNodeData}
+  onConfirm={handleEditNodeConfirm}
+  onCancel={() => setEditNodeModalOpen(false)}
+/>
+
 
         <EditEdgeModal
         isOpen={editEdgeModalOpen}
         edgeData={editEdgeData}
         onConfirm={handleEditEdgeConfirm}
         onCancel={() => setEditEdgeModalOpen(false)}
-        />
-
-      <NodeStylesPanel
-      isOpen={isNodeStylesModalOpen}
-      onRequestClose={() => setIsNodeStylesModalOpen(false)}
-      labelColors={labelColors}
-      onLabelColorChange={handleLabelColorChange}
-      onLabelShapeChange={handleLabelShapeChange}
-      />
         
-      </div>
-      
-      <div 
-        id="network" 
-        ref={networkContainerRef}
-        className="main-content"
-      />
-      
-      <div className="rightbar">
-      <PropertiesPanel
-        node={selectedNode}
-        onSave={(node) => console.log("Save node:", node)}
-
-      />
-      {showCypher && <CypherPanel cypher={cypherQuery} onCypherChange={handleCypherChange} />}
-      </div>
-
-      <NodeStylesPanel
-          labelColors={labelColors}
-          onLabelColorChange={handleLabelColorChange}
-          onLabelShapeChange={handleLabelShapeChange}
-      />
-      
-      
-      <ContextMenu />
-      
-      
-    </div>
-  );
-  
-/*  
-  return (
-    <div className="App">
-       <div 
-      id="network" 
-      ref={networkContainerRef}
-      style={{ width: "70%", height: "600px", float: "left" }} 
+        
+t" }} 
     />
       <ContextMenu />
       <PropertiesPanel
