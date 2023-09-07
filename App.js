@@ -9,14 +9,14 @@ import PropertiesPanel from "./PropertiesPanel";
 import CypherPanel from "./CypherPanel";
 import EditNodeModal from "./EditNodeModal";
 import EditEdgeModal from "./EditEdgeModal";
-import { NE<<<<<<< HEAD
+
 import { NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD,DATABASE } from "./COOnfig";
 import NodeStylesPanel from "./NodeStylesPanel";
-=======
+
 import { NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD,DATABASE } from "./Config";
 import NodeStylesPanel from "./NodeStylesPanel";
 import ImportGraphModal from './ImportGraphModal';
->>>>>>> b776cbb (Saving local changes before checking out main branch)
+
 
 
 
@@ -1091,7 +1091,7 @@ const generateCypherQuery = () => {
         onCancel={() => setEditEdgeModalOpen(false)}
         
         
-t" }} 
+
     />
       <ContextMenu />
       <PropertiesPanel
@@ -1122,7 +1122,7 @@ t" }}
         onCancel={() => setEditEdgeModalOpen(false)}
       />
     </div>
+    </div>
   );
-*/
 }
 export default App;

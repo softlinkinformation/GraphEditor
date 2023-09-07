@@ -1,11 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Modal from "react-modal";
 
-<<<<<<< HEAD
-function EditEdgeModal({ isOpen, edgeData, onConfirm, onCancel }) {
-=======
 function EditEdgeModal({ isOpen, edgeData, onConfirm, onCancel, setGraphData  }) {
->>>>>>> b776cbb (Saving local changes before checking out main branch)
   const [edgeType, setEdgeType] = useState("");
   const [edgeProperties, setEdgeProperties] = useState({});
 
@@ -16,12 +12,6 @@ function EditEdgeModal({ isOpen, edgeData, onConfirm, onCancel, setGraphData  })
     }
   }, [edgeData]);
 
-<<<<<<< HEAD
-  const handleConfirm = () => {
-    if (onConfirm) {
-      onConfirm({ ...edgeData, label: edgeType, properties: edgeProperties });
-    }
-=======
   const handleConfirm = async () => {
     const newEdgeData = { ...edgeData, label: edgeType, properties: edgeProperties };
   
@@ -34,7 +24,6 @@ function EditEdgeModal({ isOpen, edgeData, onConfirm, onCancel, setGraphData  })
     });
   
     await saveGraph();  // Call to save graph */
->>>>>>> b776cbb (Saving local changes before checking out main branch)
   };
 
   const handleKeyChange = (oldKey) => (event) => {

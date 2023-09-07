@@ -3,11 +3,7 @@ import Modal from "react-modal";
 
 Modal.setAppElement("#root");
 
-<<<<<<< HEAD
-const EditNodeModal = ({ isOpen, nodeData, onConfirm, onCancel }) => {
-=======
 const EditNodeModal = ({ isOpen, nodeData, onConfirm, onCancel, setGraphData, writeGraphToDatabase }) => {
->>>>>>> b776cbb (Saving local changes before checking out main branch)
   const [labels, setLabels] = useState(nodeData ? [nodeData.label] : []);
   const [properties, setProperties] = useState(nodeData ? nodeData.properties || {} : {});
 
@@ -18,16 +14,6 @@ const EditNodeModal = ({ isOpen, nodeData, onConfirm, onCancel, setGraphData, wr
     }
   }, [nodeData]);
 
-<<<<<<< HEAD
-  const handleConfirm = () => {
-    onConfirm({
-      ...nodeData,
-      label: labels.join(", "),
-      properties: properties,
-    });
-  };
-
-=======
 
   const handleConfirm = () => {
     const newNodeData = { ...nodeData, label: labels.join(", "), properties: properties };
@@ -36,7 +22,6 @@ const EditNodeModal = ({ isOpen, nodeData, onConfirm, onCancel, setGraphData, wr
   
 
   
->>>>>>> b776cbb (Saving local changes before checking out main branch)
   const addLabel = () => {
     setLabels([...labels, ""]);
   };
