@@ -9,14 +9,9 @@ import PropertiesPanel from "./PropertiesPanel";
 import CypherPanel from "./CypherPanel";
 import EditNodeModal from "./EditNodeModal";
 import EditEdgeModal from "./EditEdgeModal";
-
-import { NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD,DATABASE } from "./COOnfig";
-import NodeStylesPanel from "./NodeStylesPanel";
-
 import { NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD,DATABASE } from "./Config";
 import NodeStylesPanel from "./NodeStylesPanel";
 import ImportGraphModal from './ImportGraphModal';
-
 
 
 
@@ -56,6 +51,8 @@ function App() {
   const [isNodeStylesModalOpen, setIsNodeStylesModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [label, setLabel] = useState("");
+  const [isMounted, setIsMounted] = useState(false);
+
 
 
   function usePrevious(value) {
@@ -126,7 +123,10 @@ const onLabelButtonClick = (label) => {
   useEffect(() => {
     localStorage.setItem("nodeId", nodeId);
     console.log("the node id is being set")
+  }, [nodeId]);
+
 //This hook retrieves the nodeId from the local storage. (browser)
+  useEffect(() => {
     const savedNodeId = localStorage.getItem("nodeId");
     if (savedNodeId) {
       setNodeId(Number(savedNodeId));
@@ -584,12 +584,25 @@ const ContextMenu = ({ x, y }) => {
   }
 }
 
+useEffect(() => {
+  setIsMounted(true);
+  return () => {
+    setIsMounted(false);
+  };
+}, [network]);
+
 
 //This hook contains all the manipulations of the vis-network library, where the user can add, delete and edit ndoes.
 useEffect(() => {
+
+  if (!isMounted || queryType === null) {
+    console.log("exiting the function "); 
+    return; 
+  }
   if (queryType === null ) {console.log("exiting the function "); return; } // exit if no query selected
   console.log("querytype", queryType);
   const container = document.getElementById("network");
+  console.log("the container is", container)
   
     // Your options...
     const options = {
@@ -650,6 +663,7 @@ useEffect(() => {
       },
       };
       console.log("added nodes")
+    
     
   
 //Updates the network after adding the nodes,edes etc. 
@@ -1052,13 +1066,10 @@ const generateCypherQuery = () => {
 
 //RETURN ELEMENTS OF THE HTML.
 //<button onClick={handleSaveGraph}>Save Graph</button>
-//<button onClick={handleImportGraph}>Import Graph</button>
-//<button onClick={writeGraphToDatabase}>Save Graph</button>
   return (
     <div className="App">
       <div className="leftbar ">
-      <button onClick={() => setIsImportModalOpen(true)} >Import Labels</button> 
-        <button onClick={handleShowCypher}>Show Cypher</button>
+      <button onClick={() => setIsImportModalOpen(true)} >Import Labels</button>
         <button onClick={saveGraphData}>Export JSON</button>
         <button onClick={() => setIsNodeStylesModalOpen(true)}>Show Node Styles</button>
       </div>
@@ -1074,7 +1085,6 @@ const generateCypherQuery = () => {
   }}
 />
       
-      
       <div className="top-bar">
       <EditNodeModal
   isOpen={editNodeModalOpen}
@@ -1082,47 +1092,42 @@ const generateCypherQuery = () => {
   onConfirm={handleEditNodeConfirm}
   onCancel={() => setEditNodeModalOpen(false)}
 />
-
-
         <EditEdgeModal
         isOpen={editEdgeModalOpen}
         edgeData={editEdgeData}
         onConfirm={handleEditEdgeConfirm}
         onCancel={() => setEditEdgeModalOpen(false)}
-        
-        
-
     />
       <ContextMenu />
+      </div>
+      <div className="rightbar">
       <PropertiesPanel
         node={selectedNode}
         onSave={(node) => console.log("Save node:", node)}
       />
-      <button onClick={saveGraphData}>Save Visualization</button>
-      <button onClick={handleImportGraph}>Import Graph</button>
-      <button onClick={handleSaveGraph}>Save Graph</button>
-      <button onClick={handleShowCypher}>Show Cypher</button>
-      <button onClick={writeGraphToDatabase}>Write to Database</button>
-      {showCypher && <CypherPanel cypher={cypherQuery} onCypherChange={handleCypherChange} />}
       <EditNodeModal
         isOpen={editNodeModalOpen}
         nodeData={editNodeData}
         onConfirm={handleEditNodeConfirm}
         onCancel={() => setEditNodeModalOpen(false)}
       />
+      </div>
+
+      <div 
+        id="network" 
+        ref={networkContainerRef}
+        className="main-content"
+      />
+      
       <NodeStylesPanel
         labelColors={labelColors}
         onLabelColorChange={handleLabelColorChange}
         onLabelShapeChange={handleLabelShapeChange}
       />
-      <EditEdgeModal
-        isOpen={editEdgeModalOpen}
-        edgeData={editEdgeData}
-        onConfirm={handleEditEdgeConfirm}
-        onCancel={() => setEditEdgeModalOpen(false)}
-      />
-    </div>
+      
+      
     </div>
   );
+
 }
 export default App;
