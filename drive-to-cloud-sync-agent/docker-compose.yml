@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  sync-agent:
+    build: .
+    container_name: drive-sync-agent
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      # Mount credentials directory
+      - ./credentials:/app/credentials:ro
+      # Mount logs directory for persistence
+      - ./logs:/app/logs
+    environment:
+      - NODE_ENV=production
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Optional: Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M

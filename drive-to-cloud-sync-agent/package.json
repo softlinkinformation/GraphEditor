@@ -1,0 +1,25 @@
+{
+  "name": "drive-to-cloud-sync-agent",
+  "version": "1.0.0",
+  "description": "Agent that syncs files from Google Drive to Google Cloud Storage every 6 hours",
+  "main": "sync-agent.js",
+  "scripts": {
+    "start": "node sync-agent.js",
+    "test": "node sync-agent.js --test"
+  },
+  "keywords": [
+    "google-drive",
+    "google-cloud-storage",
+    "sync",
+    "automation"
+  ],
+  "dependencies": {
+    "googleapis": "^128.0.0",
+    "@google-cloud/storage": "^7.7.0",
+    "node-cron": "^3.0.3",
+    "dotenv": "^16.3.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
